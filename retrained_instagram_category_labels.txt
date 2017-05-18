@@ -1,0 +1,6 @@
+friendscategory
+landscapecategory
+foodcategory
+animalscategory
+quotecategory
+selfiecategory
