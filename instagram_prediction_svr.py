@@ -1,10 +1,9 @@
 import csv
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import cross_val_score
 from sklearn.svm import SVR
-from sklearn import preprocessing
-from sklearn import utils
+from sklearn import preprocessing, utils
+from sklearn.model_selection import KFold
 
 dataframe = pd.read_csv('/Users/ericmassip/Desktop/TFG/Instagram_Data/allCategoriesTogetherFilteredByScoreOnly.csv')
 #dataframe = dataframe[0:1100]
@@ -14,15 +13,22 @@ inputY = np.squeeze(inputY)
 dataframe = dataframe.drop(['Filename', 'Likes', 'RangeOfLikes'], axis=1)
 inputX = dataframe.loc[:, ['Posts','Followers','Following', 'Score']].as_matrix()
 
-print(inputY)
-print(inputX)
+def get_score(x_train, y_train, x_test, y_test):
+    regressionModel = SVR(kernel= 'rbf', C=2e3, gamma=0.0000000001)
+    regressionModel.fit(x_train, y_train)
+    score = regressionModel.score(x_test, y_test)
+    return (score)
 
-clf = SVR(kernel= 'rbf', C=1e4, gamma=0.01)
-clf.fit(inputX, inputY)
+kf = KFold(n_splits=12, shuffle=False)
+kf.get_n_splits(inputX)
 
-accuracy = clf.score(inputX, inputY)
-#print(accuracy)
+crossValidationScore = 0
 
-#rowToPredict = [44066, 8388, 613, 0.709709]
-#rowToPredict = np.reshape(rowToPredict, (1, -1))
-#print(clf.predict(rowToPredict))
+for train_index, test_index in kf.split(inputX):
+    inputX_train, inputX_test = inputX[train_index], inputX[test_index]
+    inputY_train, inputY_test = inputY[train_index], inputY[test_index]
+    scoreForThisSplit = get_score(inputX_train, inputY_train, inputX_test, inputY_test)
+    print("Accuracy = ", scoreForThisSplit)
+    crossValidationScore = crossValidationScore + scoreForThisSplit
+
+print("Cross Validation Score = ", crossValidationScore/12)
